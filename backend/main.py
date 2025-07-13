@@ -1,7 +1,13 @@
+import os
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import os
-from dotenv import load_dotenv
+
+from app.core.database import engine, Base
+
+# En production, utilisez Alembic pour les migrations.
+Base.metadata.create_all(bind=engine)
 
 load_dotenv()
 
@@ -23,11 +29,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 async def read_root():
     return {"message": "Bienvenue sur l'API XalimaFlow !"}
 
-# Exemple d'utilisation d'une variable d'environnement
+
 @app.get("/test-env")
 async def test_env():
     db_url = os.getenv("DATABASE_URL", "URL de base de données non définie")

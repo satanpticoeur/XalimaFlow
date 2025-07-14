@@ -7,9 +7,9 @@ interface ContentEditorProps {
 }
 
 const ContentEditor: React.FC<ContentEditorProps> = ({ initialValue, onEditorChange }) => {
-  const editorRef = useRef<any>(null);
+  const editorRef = useRef(null);
 
-  const tinymceApiKey = import.meta.env.VITE_TINYMCE_API_KEY || 'no-api-key';
+  const tinymceApiKey = import.meta.env.VITE_TINYMCE_API_KEY   || 'no-api-key';
 
   return (
     <Editor

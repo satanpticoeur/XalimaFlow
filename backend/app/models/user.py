@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from ..core.database import Base
 
@@ -12,6 +13,8 @@ class User(Base):
     is_superuser = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    contents = relationship("Content", back_populates="owner")
 
     def __repr__(self):
         return f"<User(email='{self.email}', id={self.id})>"

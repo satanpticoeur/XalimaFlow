@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
+
+from app.crud.user import get_user_by_email
 from app.schemas.token import TokenData
 from app.core.config import settings
 from fastapi.security import OAuth2PasswordBearer
@@ -21,14 +23,15 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     )
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
+        email: str | None = payload.get("sub")
+        user_id: int | None = payload.get("user_id") # <--- EXTRAIRE L'ID ICI
+        if email is None or user_id is None: # <--- VÉRIFIER QUE L'ID EST PRÉSENT
             raise credentials_exception
-        token_data = TokenData(email=email)
+        token_data = TokenData(email=email, user_id=user_id) # <--- PASSER L'ID À TokenData
     except JWTError:
         raise credentials_exception
-    user = crud_user.get_user_by_email(db, email=token_data.email)
-    if user is None:
+    user = get_user_by_email(db, email=token_data.email)
+    if user is None or user.id != token_data.user_id: # <--- VÉRIFIER QUE L'ID CORRESPOND
         raise credentials_exception
     return user
 

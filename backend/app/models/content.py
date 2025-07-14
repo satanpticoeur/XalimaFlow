@@ -14,16 +14,15 @@ class Content(Base):
     content_markdown = Column(Text, nullable=True)
     status = Column(String, default="draft")  # draft, published, archived
 
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    user = relationship("User")  # Relation avec le modèle User
+    owner_id = Column(Integer, ForeignKey("users.id"))
+    owner = relationship("User", back_populates="contents")
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     # On peut ajouter des relations pour les tags, projets. plus tard
     # project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
     # project = relationship("Project")
-    #
     # tags = relationship("Tag", secondary="content_tags", back_populates="contents")
 
 

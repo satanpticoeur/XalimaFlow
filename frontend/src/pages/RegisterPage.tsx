@@ -1,34 +1,35 @@
-// frontend/src/pages/Login.tsx
+// frontend/src/pages/Register.tsx
 import React, { useState } from 'react';
-import { login } from '../services/auth';
 import { useNavigate } from 'react-router-dom';
-// Importations des composants Shadcn UI
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { useAuth } from '../contexts/AuthContext'; // <--- NOUVEAU: Importez useAuth
 
-const Login: React.FC = () => {
+const Register: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { register: authContextRegister } = useAuth(); // <--- Utilisez la fonction register du contexte
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
-      const response = await login(email, password);
-      localStorage.setItem('access_token', response.access_token);
-      toast.success('Login successful!', {
-        description: 'Welcome back to XalimaFlow!',
+      await authContextRegister(email, password); // <--- Appel à la fonction register du contexte
+      toast.success('Registration successful! You can now log in.', {
+        description: 'Welcome to XalimaFlow!',
       });
-      navigate('/dashboard');
-      
+      navigate('/login'); // Redirige vers la page de login après une inscription réussie
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Login failed. Please check your credentials.', {
+      toast.error(error.response?.data?.detail || 'An error occurred during registration.', {
         description: 'Please try again.',
-      });       
-
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -36,8 +37,8 @@ const Login: React.FC = () => {
     <div className="flex justify-center items-center min-h-screen bg-gray-50 dark:bg-gray-900">
       <Card className="w-[380px] p-4">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Login to XalimaFlow</CardTitle>
-          <CardDescription>Enter your credentials to access your account.</CardDescription>
+          <CardTitle className="text-2xl font-bold">Register for XalimaFlow</CardTitle>
+          <CardDescription>Create your account to start creating content.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -62,12 +63,14 @@ const Login: React.FC = () => {
                 required
               />
             </div>
-            <Button type="submit" className="w-full">Login</Button>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Registering...' : 'Register'}
+            </Button>
           </form>
           <div className="mt-4 text-center text-sm">
-            Don't have an account?{' '}
-            <Button variant="link" onClick={() => navigate('/register')} className="p-0 h-auto">
-              Register
+            Already have an account?{' '}
+            <Button variant="link" onClick={() => navigate('/login')} className="p-0 h-auto">
+              Login
             </Button>
           </div>
         </CardContent>
@@ -76,4 +79,4 @@ const Login: React.FC = () => {
   );
 };
 
-export default Login;
+export default Register;

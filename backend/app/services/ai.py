@@ -1,28 +1,45 @@
-import openai
+from google import genai
+from google.genai import types
 from app.core.config import settings
 
-openai.api_key = settings.OPENAI_API_KEY
+_gemini_client = None
 
-async def generate_text_with_ai(prompt: str, max_tokens: int = 500, temperature: float = 0.7) -> str:
+if settings.GEMINI_API_KEY:
+    try:
+        _gemini_client = genai.Client(api_key=settings.GEMINI_API_KEY)
+    except Exception as e:
+        print(f"Error initializing Gemini client: {e}")
+        _gemini_client = None
+else:
+    print("Warning: GEMINI_API_KEY is not set. AI generation will not work.")
+
+
+async def generate_text_with_ai(prompt: str, temperature: float = 0.7) -> str:
     """
-    Generates text using the OpenAI GPT-3.5 Turbo model.
+    Generates text using the Google Gemini model via the new client API.
     """
-    if not openai.api_key:
-        raise ValueError("OpenAI API key is not configured.")
+    if not _gemini_client:
+        raise ValueError("Google Gemini API client is not initialized. Check API key and configuration.")
 
     try:
-        response = await openai.AsyncClient().chat.completions.create(
-            model="gpt-3.5-turbo", 
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant for content creation."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=max_tokens,
-            temperature=temperature,
+        response = _gemini_client.models.generate_content(
+            model="gemini-2.5-flash", # Ou "gemini-1.5-flash" ou "gemini-2.5-flash"
+            contents=[{"parts": [{"text": prompt}]}], # Le contenu doit être dans ce format pour les requêtes plus complexes
+            config=types.GenerateContentConfig(
+                temperature=temperature,
+            )
         )
-        # Accessing the content from the response object
-        return response.choices[0].message.content.strip()
+
+        if response.text is None:
+            print(f"Gemini API returned no text content for prompt: '{prompt}'. Full response: {response}")
+            return ""
+
+        return response.text.strip()
     except Exception as e:
-        # Log the error for debugging
-        print(f"Error calling OpenAI API: {e}")
-        raise
+        print(f"Error calling Google Gemini API: {e}")
+        if "429 Quota" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+             raise Exception("Gemini API Quota Exceeded. Please check your Google Cloud Console for limits.")
+        elif "authentication" in str(e) or "invalid API key" in str(e):
+             raise Exception("Gemini API Key invalid or not configured correctly.")
+        else:
+             raise Exception(f"Failed to generate text with AI: {e}")

@@ -1,10 +1,9 @@
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
 
+from app.api.v1.endpoints import auth, users, content
 from app.core.database import engine, Base
-
-from app.api.v1.endpoints import auth, users
 
 Base.metadata.create_all(bind=engine)
 
@@ -32,6 +31,7 @@ app.add_middleware(
 # Inclusion des routeurs API
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
+app.include_router(content.router, prefix="/api/v1/content", tags=["content"])  # <--- ADD THIS
 
 
 @app.get("/")
